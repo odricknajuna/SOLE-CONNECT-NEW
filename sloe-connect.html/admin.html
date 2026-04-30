@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sole Connect Admin</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #e5d9b6;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        h2,
+        h3 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            color: #d4af37;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            margin: 30px 0 15px;
+            border-bottom: 1px solid #d4af37;
+            padding-bottom: 10px;
+        }
+
+        /* Login Box */
+        #loginBox {
+            background: #1a1a1a;
+            border: 1px solid #d4af37;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 400px;
+            margin: 80px auto;
+            text-align: center;
+        }
+
+        #loginBox input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: #0a0a0a;
+            border: 1px solid #d4af37;
+            border-radius: 6px;
+            color: #e5d9b6;
+            font-family: 'Inter', sans-serif;
+        }
+
+        #loginBox button {
+            background: #d4af37;
+            color: #0a0a0a;
+            border: none;
+            padding: 12px 24px;
+            margin: 10px 5px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #loginBox button:hover {
+            background: #b8960c;
+        }
+
+        #loginMessage {
+            color: #ff4d4d;
+            margin-top: 10px;
+        }
+
+        /* Dashboard */
+        .hidden {
+            display: none;
+        }
+
+        #dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        #logoutBtn {
+            background: transparent;
+            border: 1px solid #d4af37;
+            color: #d4af37;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        #logoutBtn:hover {
+            background: #d4af37;
+            color: #0a0a0a;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #1a1a1a;
+            border: 1px solid #d4af37;
+            border-radius: 12px;
+            padding: 20px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .stat-card p {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #d4af37;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .stat-card span {
+            display: block;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th {
+            background: #0a0a0a;
+            color: #d4af37;
+            padding: 12px;
+            text-align: left;
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #333;
+            color: #ccc;
+        }
+
+        img {
+            border-radius: 4px;
+            border: 1px solid #d4af37;
+        }
+
+        button.delete-btn {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button.delete-btn:hover {
+            background: #cc0000;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Sole Connect Admin</h2>
+
+    <!-- Login form -->
+    <div id="loginBox">
+        <h3>Admin Access</h3>
+        <input type="email" id="emailInput" placeholder="Your email">
+        <input type="password" id="passwordInput" placeholder="Password">
+        <button id="loginBtn">Login</button>
+        <button id="signupBtn">Create Account</button>
+        <p id="loginMessage"></p>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="hidden">
+        <button id="logoutBtn">Logout</button>
+
+        <div class="stats">
+            <div class="stat-card">
+                <p id="totalUsers">-</p><span>Users</span>
+            </div>
+            <div class="stat-card">
+                <p id="totalProducts">-</p><span>Products</span>
+            </div>
+            <div class="stat-card">
+                <p id="totalOrders">-</p><span>Orders</span>
+            </div>
+        </div>
+
+        <h3>Recent Orders</h3>
+        <table id="ordersTable">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Buyer</th>
+                    <th>Seller</th>
+                    <th>Product</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h3>All Products</h3>
+        <table id="productsTable">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Title</th>
+                    <th>Price</th>
+                    <th>Seller</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Firebase configuration
+        firebase.initializeApp({
+            apiKey: "AIzaSyBrXEVy4kdH4UrYWB-JynUZ_lZvFyTHXnU",
+            authDomain: "sole-connect-5ab7e.firebaseapp.com",
+            projectId: "sole-connect-5ab7e",
+            storageBucket: "sole-connect-5ab7e.firebasestorage.app",
+            messagingSenderId: "38949588387",
+            appId: "1:38949588387:web:5d47f7061fa9539aac9e16"
+        });
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const ADMIN_EMAIL = "odrickcul@gmail.com";
+
+        const loginBox = document.getElementById('loginBox');
+        const dashboard = document.getElementById('dashboard');
+        const loginMessage = document.getElementById('loginMessage');
+
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (err) {
+                loginMessage.textContent = err.message;
+            }
+        });
+
+        document.getElementById('signupBtn').addEventListener('click', async () => {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            try {
+                await auth.createUserWithEmailAndPassword(email, password);
+            } catch (err) {
+                loginMessage.textContent = err.message;
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => auth.signOut());
+
+        auth.onAuthStateChanged(user => {
+            if (user && user.email === ADMIN_EMAIL) {
+                loginBox.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                loadStats();
+                loadOrders();
+                loadProducts();
+            } else {
+                loginBox.classList.remove('hidden');
+                dashboard.classList.add('hidden');
+                if (user) {
+                    auth.signOut();
+                    loginMessage.textContent = 'Access denied. Admin only.';
+                }
+            }
+        });
+
+        async function loadStats() {
+            const usersSnap = await db.collection('users').get();
+            const productsSnap = await db.collection('products').get();
+            const ordersSnap = await db.collection('orders').get();
+            document.getElementById('totalUsers').textContent = usersSnap.size;
+            document.getElementById('totalProducts').textContent = productsSnap.size;
+            document.getElementById('totalOrders').textContent = ordersSnap.size;
+        }
+
+        async function loadOrders() {
+            const ordersSnap = await db.collection('orders').orderBy('createdAt', 'desc').limit(20).get();
+            const tbody = document.querySelector('#ordersTable tbody');
+            tbody.innerHTML = '';
+
+            for (const doc of ordersSnap.docs) {
+                const order = doc.data();
+                let buyerName = order.buyerId;
+                let sellerName = order.sellerId;
+                let productTitle = order.productTitle || 'N/A';
+
+                try {
+                    const buyerDoc = await db.collection('users').doc(order.buyerId).get();
+                    if (buyerDoc.exists) buyerName = buyerDoc.data().name || buyerDoc.data().email;
+                    const sellerDoc = await db.collection('users').doc(order.sellerId).get();
+                    if (sellerDoc.exists) sellerName = sellerDoc.data().name || sellerDoc.data().email;
+                } catch (e) { }
+
+                const row = tbody.insertRow();
+                row.innerHTML = `
+          <td>${doc.id.slice(0, 6)}</td>
+          <td>${buyerName}</td>
+          <td>${sellerName}</td>
+          <td>${productTitle}</td>
+          <td>UGX ${order.totalPrice?.toLocaleString() || 0}</td>
+          <td>${order.status || 'pending'}</td>
+        `;
+            }
+        }
+
+        async function loadProducts() {
+            const productsSnap = await db.collection('products').orderBy('createdAt', 'desc').get();
+            const tbody = document.querySelector('#productsTable tbody');
+            tbody.innerHTML = '';
+
+            for (const doc of productsSnap.docs) {
+                const product = doc.data();
+                let sellerName = product.sellerId;
+                try {
+                    const sellerDoc = await db.collection('users').doc(product.sellerId).get();
+                    if (sellerDoc.exists) sellerName = sellerDoc.data().name || sellerDoc.data().email;
+                } catch (e) { }
+
+                const row = tbody.insertRow();
+                const imgCell = row.insertCell(0);
+                const img = document.createElement('img');
+                img.src = product.images?.[0] || 'https://via.placeholder.com/50/0a0a0a/d4af37?text=No+Img';
+                img.style.width = '50px';
+                img.style.height = '50px';
+                img.style.objectFit = 'cover';
+                imgCell.appendChild(img);
+
+                row.insertCell(1).textContent = product.title;
+                row.insertCell(2).textContent = `UGX ${product.price?.toLocaleString() || 0}`;
+                row.insertCell(3).textContent = sellerName;
+
+                const actionCell = row.insertCell(4);
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.onclick = async () => {
+                    if (confirm('Delete this product?')) {
+                        await db.collection('products').doc(doc.id).delete();
+                        row.remove();
+                        loadStats();
+                    }
+                };
+                actionCell.appendChild(deleteBtn);
+            }
+        }
+    </script>
+</body>
+
+</html>
